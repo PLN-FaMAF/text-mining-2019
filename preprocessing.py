@@ -106,6 +106,9 @@ def corpus_processor(corpus_directory, language_model="es", remove_stopwords=Tru
         with open(os.path.join(corpus_directory, fname), "r") as fh:
             # Careful with this for very large docs
             document = re.sub(r"\s+", " ", fh.read())
+
+        nlp.max_length = max(len(document), nlp.max_length)
+
         tokens = [
             token.text for token in nlp(document, disable=["tagger", "parser", "ner"])
             if not (remove_stopwords and token.is_stop)
