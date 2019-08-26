@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+
+__author__ = "Cristian Cardellino"
+
+import argparse
 import numpy as np
 import os
 import pandas as pd
@@ -32,9 +37,7 @@ def build_cooccurrence_matrix(corpus, window_size=5, scale_factor="scaled",
     Returns
     -------
     pd.DataFrame
-        A tuple where the first element is the dictionary with the word_count of the
-        top `vocab_size` words in the vocabulary, and the second element is the (scaled) matrix
-        of cooccurrences for the top `vocab_size` words in the vocabulary.
+        The (scaled) matrix of cooccurrences for the top `vocab_size` words in the vocabulary.
     """
 
     assert scale_factor in {"flat", "scaled"}
@@ -45,7 +48,7 @@ def build_cooccurrence_matrix(corpus, window_size=5, scale_factor="scaled",
     for document in corpus:
         for idx, word in enumerate(document):
             word_count[word] += 1
-            lwindow = reversed(document[max(idx-window_size,0):idx])
+            lwindow = reversed(document[max(idx-window_size, 0):idx])
             rwindow = document[idx+1:idx+1+window_size]
 
             for lidx, lword in enumerate(lwindow):
@@ -71,9 +74,8 @@ def build_cooccurrence_matrix(corpus, window_size=5, scale_factor="scaled",
             word_matrix[w1_idx, w2_idx] = count
 
     vocab_ = [word for word in sorted(vocab, key=lambda x: vocab[x])]
-    word_count = {word: count for word, count in word_count.items() if word in vocab}
 
-    return word_count, pd.DataFrame(word_matrix, index=vocab_, columns=vocab_)
+    return pd.DataFrame(word_matrix, index=vocab_, columns=vocab_)
 
 
 def corpus_processor(corpus_directory, language_model="es", remove_stopwords=True,
@@ -113,3 +115,51 @@ def corpus_processor(corpus_directory, language_model="es", remove_stopwords=Tru
             tokens = [token.lower() for token in tokens]
 
         yield tokens
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("preprocessing")
+    parser.add_argument("corpus_directory",
+                        help="Path to the directory holding the corpus files.")
+    parser.add_argument("output_file",
+                        help="Path to store the matrix (as csv file).")
+    parser.add_argument("--language-model", "-l",
+                        default="es",
+                        help="Name of the SpaCy language model to use for tokenization.")
+    parser.add_argument("--ignore-unknown", "-u",
+                        action="store_true",
+                        help="Activate to avoid reserving a `UNK` vector for unkown words.")
+    parser.add_argument("--scale-factor", "-f",
+                        default="flat",
+                        help="The scale factor. Can be either `flat` or `scaled`.")
+    parser.add_argument("--use-stopwords", "-s",
+                        action="store_true",
+                        help="Activate to avoid ignoring the stopwords in the model.")
+    parser.add_argument("--use-case", "-c",
+                        action="store_true",
+                        help="Activate to avoid word normalization via lowercase.")
+    parser.add_argument("--vocab-size", "-w",
+                        default=5000,
+                        help="The maximum amount of words to consider.",
+                        type=int)
+    parser.add_argument("--window-size", "-w",
+                        default=5,
+                        help="The size of the co-occurrence window.",
+                        type=int)
+
+    args = parser.parse_args()
+
+    cooccurrence_matrix = build_cooccurrence_matrix(
+        corpus=corpus_processor(
+            corpus_directory=args.corpus_directory,
+            language_model=args.language_model,
+            remove_stopwords=not args.use_stopwords,
+            lowercase=not args.use_case
+        ),
+        window_size=args.window_size,
+        scale_factor=args.scale_factor,
+        vocab_size=args.vocab_size,
+        unkown_vector=not args.ignore_unknown
+    )
+
+    cooccurrence_matrix.to_csv(args.output_file)
