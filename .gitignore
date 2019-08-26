@@ -125,3 +125,6 @@ dmypy.json
 
 # Project specific
 data/
+.*.sw[po]
+*.slides.html
+.vscode/
