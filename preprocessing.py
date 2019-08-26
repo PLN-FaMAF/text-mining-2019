@@ -138,7 +138,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-case", "-c",
                         action="store_true",
                         help="Activate to avoid word normalization via lowercase.")
-    parser.add_argument("--vocab-size", "-w",
+    parser.add_argument("--vocab-size", "-v",
                         default=5000,
                         help="The maximum amount of words to consider.",
                         type=int)
