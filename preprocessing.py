@@ -8,12 +8,13 @@ import os
 import pandas as pd
 import re
 import spacy
+import sys
 
 from collections import defaultdict
 
 
 def build_cooccurrence_matrix(corpus, window_size=5, scale_factor="scaled",
-                              vocab_size=5000, unkown_vector=True):
+                              vocab_size=5000, unkown_vector=True, verbose=False):
     """
     Builds a co-occurrence matrix with `window_size` and `scale_factor` over `corpus`.
 
@@ -33,6 +34,8 @@ def build_cooccurrence_matrix(corpus, window_size=5, scale_factor="scaled",
         The maximum size of the vocabulary
     unknown_vector : bool
         Whether to use a vector "UNK" for the words outside of the vocabulary.
+    verbose : bool
+        Activate to print a simple progress indicator
 
     Returns
     -------
@@ -45,7 +48,9 @@ def build_cooccurrence_matrix(corpus, window_size=5, scale_factor="scaled",
     word_count = defaultdict(int)
     word_word = defaultdict(int)
 
-    for document in corpus:
+    for didx, document in enumerate(corpus, start=1):
+        if verbose:
+            print(f"\rDocument No. {didx}", end="", file=sys.stderr)
         for idx, word in enumerate(document):
             word_count[word] += 1
             lwindow = reversed(document[max(idx-window_size, 0):idx])
@@ -56,6 +61,9 @@ def build_cooccurrence_matrix(corpus, window_size=5, scale_factor="scaled",
 
             for ridx, rword in enumerate(rwindow):
                 word_word[(word, rword)] += 1/(ridx+1) if scale_factor == "scaled" else 1
+
+    if verbose:
+        print(file=sys.stderr)
 
     vocab = [word for word in sorted(word_count, key=lambda w: word_count[w],
                                      reverse=True)[:vocab_size]]
@@ -145,6 +153,9 @@ if __name__ == "__main__":
                         default=5000,
                         help="The maximum amount of words to consider.",
                         type=int)
+    parser.add_argument("--verbose",
+                        action="store_true",
+                        help="Activate to print a simple progress value.")
     parser.add_argument("--window-size", "-w",
                         default=5,
                         help="The size of the co-occurrence window.",
@@ -162,7 +173,8 @@ if __name__ == "__main__":
         window_size=args.window_size,
         scale_factor=args.scale_factor,
         vocab_size=args.vocab_size,
-        unkown_vector=not args.ignore_unknown
+        unkown_vector=not args.ignore_unknown,
+        verbose=args.verbose
     )
 
     cooccurrence_matrix.to_csv(args.output_file)
