@@ -104,6 +104,56 @@ def tfidf(df):
     return (tfs.T * idfs).T
 
 
+def ngram_vsm(df, n=2):
+    """Create a character-level VSM from `df`.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    n : int
+        The n-gram size.
+
+    Returns
+    -------
+    pd.DataFrame
+        This will have the same column dimensionality as `df`, but the
+        rows will be expanded with representations giving the sum of
+        all the original rows in `df` that contain that row's n-gram.
+
+    """
+    unigram2vecs = defaultdict(list)
+    for w, x in df.iterrows():
+        for c in get_character_ngrams(w, n):
+            unigram2vecs[c].append(x)
+    unigram2vecs = {c: np.array(x).sum(axis=0)
+                    for c, x in unigram2vecs.items()}
+    cf = pd.DataFrame(unigram2vecs).T
+    cf.columns = df.columns
+    return cf
+
+
+def get_character_ngrams(w, n):
+    """Map a word to its character-level n-grams, with boundary
+    symbols '<w>' and '</w>'.
+
+    Parameters
+    ----------
+    w : str
+    n : int
+        The n-gram size.
+
+    Returns
+    -------
+    list of str
+
+    """
+    if n > 1:
+        w = ["<w>"] + list(w) + ["</w>"]
+    else:
+        w = list(w)
+    return ["".join(w[i: i+n]) for i in range(len(w)-n+1)]
+
+
 def lsa(df, k=100):
     """Latent Semantic Analysis using pure scipy.
 
