@@ -86,8 +86,8 @@ def build_cooccurrence_matrix(corpus, window_size=5, scale_factor="scaled",
     return pd.DataFrame(word_matrix, index=vocab_, columns=vocab_)
 
 
-def corpus_processor(corpus_directory, language_model="es", remove_stopwords=True,
-                     lowercase=True):
+def corpus_processor(corpus_directory, language_model="es_core_news_sm",
+                     remove_stopwords=True, lowercase=True):
     """
     Generator to retrieve and process the files of a corpus.
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument("output_file",
                         help="Path to store the matrix (as csv file).")
     parser.add_argument("--language-model", "-l",
-                        default="es",
+                        default="es_core_news_sm",
                         help="Name of the SpaCy language model to use for tokenization.")
     parser.add_argument("--ignore-unknown", "-u",
                         action="store_true",

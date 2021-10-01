@@ -125,6 +125,7 @@ dmypy.json
 
 # Project specific
 data/
+!data/glove.6B.50d.txt.gz
 .*.sw[po]
 *.slides.html
 .vscode/
